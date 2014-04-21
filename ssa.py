@@ -129,10 +129,5 @@ print(theta)
 #   ==> 'Non Salesman Assigned Accounts?'
 #   ==> 'Credit Score'
 
-print(cols[5])
-print(cols[7])
-print(cols[12])
 
-print(cols[11])
-print(cols[13])
-print(cols[14])
+print({cols[i]: theta[i] for i in range(len(theta))})
