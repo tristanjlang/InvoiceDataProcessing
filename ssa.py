@@ -14,36 +14,37 @@ what patterns & insights do you see that would be useful to Company XYZ,
 What processes would you put in place to:
   ==> deter customers from late payments
   ==> improve customer behavior overall
-
-
-
-*****
-LOOKING FOR RELATIONSHIPS BETWEEN:
--total size of invoices vs credit score
--total size of invoices vs gdp change in region
--total size of invoices vs unemployment in region
--total size of invoices vs geographic region
--geographic region vs credit score
--total size of invoices vs salesmen/house accounts
-
-OTHER FACTORS:
--market type
--geographic region
--whether accounts with salesmen vs house accounts have better payment histories
--credit score
--gdp change in region
--unemployment in region
-*****
-
 '''
 
 
 import numpy as np
 import pandas as pd
 import re
-import math
-import pandasql
-import scipy.stats
+#import math
+#import pandasql
+#import scipy.stats
+from sklearn.linear_model import SGDClassifier
+
+
+
+# m denotes the number of examples here, not the number of features
+def gradientDescent(x, y, theta, alpha, m, numIterations):
+    xTrans = x.transpose()
+    for i in range(0, numIterations):
+        hypothesis = np.dot(x, theta)
+        loss = hypothesis - y
+        # avg cost per example (the 2 in 2*m doesn't really matter here.
+        # But to be consistent with the gradient, I include it)
+        cost = np.sum(loss ** 2) / (2 * m)
+        print("Iteration %d | Cost: %f" % (i, cost))
+        # avg gradient per example
+        gradient = np.dot(xTrans, loss) / m
+        # update
+        theta = theta - alpha * gradient
+    return theta
+
+
+
 
 df = pd.read_csv('data exercise_v2.csv', na_values='#N/A')
 df = df.dropna()
@@ -87,7 +88,7 @@ cleandf['GDP % Change (2011-12)'] = df['GDP % Change (2011-12)'].map(lambda x: f
 cleandf['Unemployment Average % (2011-12)'] =df['Unemployment Average % (2011-12)'].map(lambda x: float(''.join(re.findall(r'[0-9.\-]+', x))) / 100)
 
 
-#normalize features ==> multiply cleandf values by maxdict values to get the true value
+# normalize features ==> multiply cleandf values by maxdict values to get the true value
 maxdict = {}
 maxdict['Average Days to Pay'] = max(cleandf['Average Days to Pay'])
 maxdict['Average Invoice Amount'] = max(cleandf['Average Invoice Amount'])
@@ -102,3 +103,36 @@ cleandf['GDP % Change (2011-12)'] = cleandf['GDP % Change (2011-12)'] / maxdict[
 cleandf['Unemployment Average % (2011-12)'] = cleandf['Unemployment Average % (2011-12)'] / maxdict['Unemployment Average % (2011-12)']
 
 
+# gradient descent
+y = pd.DataFrame(columns=['Average Days to Pay'])
+y = np.array(cleandf['Average Days to Pay'])
+cols = list(cleandf.columns)
+cols.remove('Average Days to Pay')
+x = np.array(cleandf[cols])
+
+#clf = SGDClassifier(loss='squared_loss', penalty='l2')
+#clf.fit(x, y)
+
+numIterations= 100
+alpha = 0.3
+m, n = np.shape(x)
+theta = np.ones(n)
+theta = gradientDescent(x, y, theta, alpha, m, numIterations)
+print(theta)
+
+#YES = 6,8,13
+#   ==> 'Market Type Co-Man / Vehicle Builder'
+#   ==> 'Region Corporate'
+#   ==> 'Average Invoice Amount'
+#NO = 12,14,15
+#   ==> 'Region PDC'
+#   ==> 'Non Salesman Assigned Accounts?'
+#   ==> 'Credit Score'
+
+print(cols[5])
+print(cols[7])
+print(cols[12])
+
+print(cols[11])
+print(cols[13])
+print(cols[14])
